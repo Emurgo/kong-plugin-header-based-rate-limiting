@@ -2,8 +2,8 @@ package = "kong-plugin-header-based-rate-limiting"
 version = "1.2.0-1"
 supported_platforms = {"linux", "macosx"}
 source = {
-  url = "git+https://github.com/emartech/kong-plugin-header-based-rate-limiting.git",
-  tag = "1.2.0"
+  url = "git+https://github.com/rcmorano/kong-plugin-header-based-rate-limiting.git",
+  branch = "pocs"
 }
 description = {
   summary = "Rate limit incoming requests based on its headers.",
