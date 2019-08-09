@@ -48,7 +48,7 @@ local function check_infix(encoded_header_composition)
 end
 
 local function check_unique(encoded_header_composition, header_based_rate_limit)
-    local model = RateLimitModel(kong.db.dao)
+    local model = RateLimitModel(kong.db)
     local custom_rate_limits = model:get(
         header_based_rate_limit.service_id,
         header_based_rate_limit.route_id,
