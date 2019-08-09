@@ -5,7 +5,7 @@ return {
             type = "table",
             schema = {
                 fields = {
-                    host = { type = "string", required = true },
+                    host = { type = "string", required = true, default = "" },
                     port = { type = "number", required = true, default = 6379 },
                     db = { type = "number", required = true, default = 0 },
                     timeout_in_milliseconds = { type = "number", required = true, default = 1000 },
