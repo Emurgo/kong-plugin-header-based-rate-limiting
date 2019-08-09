@@ -1,5 +1,5 @@
 local cjson = require "cjson"
-local crud = require "kong.api.crud_helpers"
+local crud = require "kong.api.endpoints"
 local split = require("kong.tools.utils").split
 local RedisFactory = require "kong.plugins.header-based-rate-limiting.redis_factory"
 
