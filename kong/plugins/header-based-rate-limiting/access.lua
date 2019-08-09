@@ -6,6 +6,7 @@ local RateLimitRule = require "kong.plugins.header-based-rate-limiting.rate_limi
 local RateLimitModel = require "kong.plugins.header-based-rate-limiting.rate_limit_model"
 local RedisFactory = require "kong.plugins.header-based-rate-limiting.redis_factory"
 local get_null_uuid = require "kong.plugins.header-based-rate-limiting.get_null_uuid"
+local kong = kong
 
 local RATE_LIMIT_HEADER = "X-RateLimit-Limit"
 local REMAINING_REQUESTS_HEADER = "X-RateLimit-Remaining"
