@@ -1,5 +1,7 @@
 return {
     no_consumer = true,
+    -- local cache_key = kong.db.header_based_rate_limits:cache_key(service_id, route_id, rate_limit_subject:encoded_identifier())
+    cache_key = { "service_id", "route_id", "rate_limit_subject" },
     fields = {
         redis = {
             type = "table",
