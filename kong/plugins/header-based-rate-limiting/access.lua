@@ -40,6 +40,7 @@ function Access.execute(conf)
 
     local request_count = pool:request_count(rate_limit_key)
 
+    kong.log("@@@", conf)
     local service_id = conf.service_id or get_null_uuid(kong.db.strategy)
     local route_id = conf.route_id or get_null_uuid(kong.db.strategy)
 
