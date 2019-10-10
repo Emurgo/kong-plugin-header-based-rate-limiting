@@ -10,10 +10,10 @@ function HeaderBasedRateLimitingHandler:new()
     HeaderBasedRateLimitingHandler.super.new(self, "header-based-rate-limiting")
 end
 
-function HeaderBasedRateLimitingHandler:access(conf)
+function HeaderBasedRateLimitingHandler:access(config)
     HeaderBasedRateLimitingHandler.super.access(self)
 
-    local success, error = pcall(Access.execute, conf)
+    local success, error = pcall(Access.execute, config)
 
     if not success then
         Logger.getInstance(ngx):logError(error)

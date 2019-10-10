@@ -6,6 +6,8 @@ local RateLimitRule = require "kong.plugins.header-based-rate-limiting.rate_limi
 local RateLimitModel = require "kong.plugins.header-based-rate-limiting.rate_limit_model"
 local RedisFactory = require "kong.plugins.header-based-rate-limiting.redis_factory"
 local get_null_uuid = require "kong.plugins.header-based-rate-limiting.get_null_uuid"
+local kong = kong
+local inspect = require('inspect')
 
 local RATE_LIMIT_HEADER = "X-RateLimit-Limit"
 local REMAINING_REQUESTS_HEADER = "X-RateLimit-Remaining"
@@ -22,28 +24,34 @@ end
 
 local function load_rate_limit_value(db, conf, rate_limit_subject)
     local rule = RateLimitRule(RateLimitModel(db), conf.default_rate_limit)
-
     return rule:find(conf.service_id, conf.route_id, rate_limit_subject)
 end
 
 function Access.execute(conf)
-    local redis = RedisFactory.create(conf.redis)
+    local redis = RedisFactory.create(conf.redis_host, conf.redis_port, conf.redis_db)
     local pool = RateLimitPool(redis)
 
     local actual_time = os.time()
     local time_reset = actual_time + 60
 
+    kong.log("@@@@@@headers@@@@@@@ ", inspect(kong.request))
     local rate_limit_subject = RateLimitSubject.from_request_headers(conf.identification_headers, kong.request.get_headers())
+    kong.log("@@@@@@rate_limit_subject@@@@@@@ ", inspect(rate_limit_subject))
     local rate_limit_identifier = rate_limit_subject:identifier()
+    kong.log("@@@@@@rate_limit_identifier@@@@@@@ ", inspect(rate_limit_identifier))
     local rate_limit_key = RateLimitKey.generate(rate_limit_identifier, conf, actual_time)
 
     local request_count = pool:request_count(rate_limit_key)
+    kong.log("@@@@@@@@@@@@@ ", inspect(rate_limit_key))
+    kong.log("@@@@@@@@@@@@@ ", inspect(request_count))
 
-    local service_id = conf.service_id or get_null_uuid(kong.db.strategy)
-    local route_id = conf.route_id or get_null_uuid(kong.db.strategy)
+    local service_id = conf.service_id or get_null_uuid(kong.db.daos.acls.errors.strategy)
+    local route_id = conf.route_id or get_null_uuid(kong.db.daos.acls.errors.strategy)
 
-    local cache_key = kong.dao.header_based_rate_limits:cache_key(service_id, route_id, rate_limit_subject:encoded_identifier())
-    local rate_limit_value = kong.cache:get(cache_key, nil, load_rate_limit_value, kong.dao.db, conf, rate_limit_subject)
+    --local cache_key = tostring(service_id) .. tostring(route_id) .. rate_limit_subject:encoded_identifier()
+    local cache_key = kong.db.header_based_rate_limits:cache_key(tostring(service_id), tostring(route_id), rate_limit_subject:encoded_identifier())
+    kong.log('@@@cachekey@@@', inspect(cache_key))
+    local rate_limit_value = kong.cache:get(cache_key, nil, load_rate_limit_value, kong.db, conf, rate_limit_subject)
 
     local remaining_requests = calculate_remaining_request_count(request_count, rate_limit_value)
 
@@ -59,6 +67,7 @@ function Access.execute(conf)
         kong.service.request.set_header(POOL_RESET_HEADER, time_reset)
     end
 
+    kong.log("@@@@@rate limit value@@@@@@@@ ", inspect(rate_limit_value))
     local rate_limit_exceeded = request_count >= rate_limit_value
 
     if not rate_limit_exceeded then
@@ -70,8 +79,8 @@ function Access.execute(conf)
     end
 
     redis:set_keepalive(
-        conf.redis.max_idle_timeout_in_milliseconds or 1000,
-        conf.redis.pool_size or 10
+        conf.redis_max_idle_timeout_in_milliseconds or 1000,
+        conf.redis_pool_size or 10
     )
 
     if rate_limit_exceeded then

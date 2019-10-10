@@ -1,3 +1,4 @@
+local inspect = require('inspect')
 local Object = require "classic"
 local get_null_uuid = require "kong.plugins.header-based-rate-limiting.get_null_uuid"
 
@@ -34,7 +35,8 @@ local query_strategies = {
     end,
 
     postgres = function(db, service_id, route_id, encoded_header_compositions)
-        return db:query(string.format(
+        --kong.log("db object", inspect(db))
+        return db.connector:query(string.format(
             "SELECT * FROM header_based_rate_limits WHERE (%s) AND (%s) AND (%s)",
             (service_id and ("service_id = '%s'"):format(service_id) or "service_id is NULL"),
             (route_id and ("route_id = '%s'"):format(route_id) or "route_id is NULL"),
@@ -44,7 +46,7 @@ local query_strategies = {
 }
 
 local function query_custom_rate_limits(db, service_id, route_id, encoded_header_compositions)
-    local query_strategy = query_strategies[db.name]
+    local query_strategy = query_strategies[db.daos.acls.errors.strategy]
     local custom_rate_limits, err = query_strategy(db, service_id, route_id, encoded_header_compositions)
 
     if not custom_rate_limits then
