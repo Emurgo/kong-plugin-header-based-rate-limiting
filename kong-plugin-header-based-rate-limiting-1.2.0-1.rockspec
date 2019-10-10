@@ -3,7 +3,7 @@ version = "1.2.0-1"
 supported_platforms = {"linux", "macosx"}
 source = {
   url = "git+https://github.com/rcmorano/kong-plugin-header-based-rate-limiting.git",
-  branch = "pocs"
+  branch = "kong-1.2-migration"
 }
 description = {
   summary = "Rate limit incoming requests based on its headers.",
