@@ -34,14 +34,14 @@ local function select_db(redis, db)
 end
 
 return {
-    create = function(config)
+    create = function(host, port, db, timeout_in_milliseconds)
         local redis = Redis:new()
 
-        set_timeout(redis, config.timeout_in_milliseconds or 1000)
+        set_timeout(redis, timeout_in_milliseconds or 1000)
 
-        connect(redis, config.host, config.port)
+        connect(redis, host, port)
 
-        select_db(redis, config.db)
+        select_db(redis, db)
 
         return redis
     end
