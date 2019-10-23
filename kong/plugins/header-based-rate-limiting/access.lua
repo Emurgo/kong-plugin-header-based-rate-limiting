@@ -34,23 +34,16 @@ function Access.execute(conf)
     local actual_time = os.time()
     local time_reset = actual_time + 60
 
-    kong.log("@@@@@@headers@@@@@@@ ", inspect(kong.request))
     local rate_limit_subject = RateLimitSubject.from_request_headers(conf.identification_headers, kong.request.get_headers())
-    kong.log("@@@@@@rate_limit_subject@@@@@@@ ", inspect(rate_limit_subject))
     local rate_limit_identifier = rate_limit_subject:identifier()
-    kong.log("@@@@@@rate_limit_identifier@@@@@@@ ", inspect(rate_limit_identifier))
     local rate_limit_key = RateLimitKey.generate(rate_limit_identifier, conf, actual_time)
 
     local request_count = pool:request_count(rate_limit_key)
-    kong.log("@@@@@@@@@@@@@ ", inspect(rate_limit_key))
-    kong.log("@@@@@@@@@@@@@ ", inspect(request_count))
 
     local service_id = conf.service_id or get_null_uuid(kong.db.daos.acls.errors.strategy)
     local route_id = conf.route_id or get_null_uuid(kong.db.daos.acls.errors.strategy)
 
-    --local cache_key = tostring(service_id) .. tostring(route_id) .. rate_limit_subject:encoded_identifier()
     local cache_key = kong.db.header_based_rate_limits:cache_key(tostring(service_id), tostring(route_id), rate_limit_subject:encoded_identifier())
-    kong.log('@@@cachekey@@@', inspect(cache_key))
     local rate_limit_value = kong.cache:get(cache_key, nil, load_rate_limit_value, kong.db, conf, rate_limit_subject)
 
     local remaining_requests = calculate_remaining_request_count(request_count, rate_limit_value)
@@ -67,7 +60,6 @@ function Access.execute(conf)
         kong.service.request.set_header(POOL_RESET_HEADER, time_reset)
     end
 
-    kong.log("@@@@@rate limit value@@@@@@@@ ", inspect(rate_limit_value))
     local rate_limit_exceeded = request_count >= rate_limit_value
 
     if not rate_limit_exceeded then

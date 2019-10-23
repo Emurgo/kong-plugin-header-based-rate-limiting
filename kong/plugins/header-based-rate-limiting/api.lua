@@ -44,8 +44,6 @@ local function encode_headers(header_composition)
     local encoded_headers = {}
 
     for _, header in ipairs(header_composition) do
-	kong.log("@@@@@_", _)
-	kong.log("@@@@@header", _)
         local encoded_header = is_wildcard(header) and "*" or encode_base64(header)
 
         table.insert(encoded_headers, encoded_header)
@@ -62,7 +60,6 @@ local function encode_header_composition(header_based_rate_limit)
     local result = {}
 
     for key, value in pairs(header_based_rate_limit) do
-	kong.log("@@@@@@@@@key",key) 
         if key == "header_composition" then
             result["header_composition"] = trim_postfix_wildcards(encode_headers(value))
         else

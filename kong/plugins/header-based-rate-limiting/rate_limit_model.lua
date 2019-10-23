@@ -35,7 +35,6 @@ local query_strategies = {
     end,
 
     postgres = function(db, service_id, route_id, encoded_header_compositions)
-        --kong.log("db object", inspect(db))
         return db.connector:query(string.format(
             "SELECT * FROM header_based_rate_limits WHERE (%s) AND (%s) AND (%s)",
             (service_id and ("service_id = '%s'"):format(service_id) or "service_id is NULL"),
