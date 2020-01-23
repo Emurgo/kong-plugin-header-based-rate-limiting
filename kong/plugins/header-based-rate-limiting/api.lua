@@ -52,20 +52,15 @@ local function encode_headers(header_composition)
     local encoded_headers = {}
 
     for _, header in ipairs(header_composition) do
-        kong.log("@@@@@@header@@@@@@@ ", inspect(header))
-        kong.log("@@@@@@is wildcard@@@@@@@ ", inspect(is_wildcard(header)))
-        kong.log("@@@@@@contains wildcard@@@@@@@ ", inspect(contains_regexp(header)))
         local encoded_header = is_wildcard(header)
         if contains_regexp(header) == true then
             encoded_header = "regexp_" .. encode_base64(header)
         else
             encoded_header = encode_base64(header)
         end
-        kong.log("@@@@@@encoded_header@@@@@@@ ", inspect(encoded_header))
 
         table.insert(encoded_headers, encoded_header)
     end
-    kong.log("@@@@@@encoded_headers@@@@@@@ ", inspect(encoded_headers))
 
     return table.concat(encoded_headers, ",")
 end
@@ -95,7 +90,6 @@ return {
             POST = function(self, ...)
                 local params_with_encoded_header_composition = encode_header_composition(self.args.post)
                 self.args.post = params_with_encoded_header_composition
-                kong.log("@@@@@@headers@@@@@@@ ", inspect(self.args.post))
                 endpoints.post_collection_endpoint(hbrl_schema)(self, ...)
             end,
 
