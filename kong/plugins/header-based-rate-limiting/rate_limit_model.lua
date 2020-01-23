@@ -55,6 +55,22 @@ local function query_custom_rate_limits(db, service_id, route_id, encoded_header
     return custom_rate_limits
 end
 
+local function query_custom_regexp_rate_limits(db, service_id, route_id)
+
+    local query = string.format(
+            "SELECT * FROM header_based_rate_limits WHERE (%s) AND (%s) AND (header_composition LIKE '%%regexp_%%');",
+            (service_id and ("service_id = '%s'"):format(service_id) or "service_id is NULL"),
+            (route_id and ("route_id = '%s'"):format(route_id) or "route_id is NULL")
+    )
+    local custom_rate_limits = db.connector:query(query)
+
+    if not custom_rate_limits then
+        error(err)
+    end
+
+    return custom_rate_limits
+end
+
 local RateLimitModel = Object:extend()
 
 function RateLimitModel:new(db)
@@ -67,6 +83,14 @@ function RateLimitModel:get(service_id, route_id, encoded_header_compositions)
         service_id,
         route_id,
         encoded_header_compositions
+    )
+end
+
+function RateLimitModel:get_regexp(service_id, route_id)
+    return query_custom_regexp_rate_limits(
+        self.db,
+        service_id,
+        route_id
     )
 end
 

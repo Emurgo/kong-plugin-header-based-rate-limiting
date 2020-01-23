@@ -28,6 +28,10 @@ local function load_rate_limit_value(db, conf, rate_limit_subject)
 end
 
 function Access.execute(conf)
+    local request_method = kong.request.get_method()
+    if kong.request.get_method() == "OPTIONS" then
+        return
+    end
     local redis = RedisFactory.create(conf.redis_host, conf.redis_port, conf.redis_db)
     local pool = RateLimitPool(redis)
 
