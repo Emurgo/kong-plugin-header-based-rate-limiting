@@ -74,9 +74,11 @@ local function find_applicable_rate_limit(model, service_id, route_id, entity_id
       end
 
       -- actually get the limit from the set and return it
-      for key, most_specific_rate_limit in pairs(regexp_limits) do
-        if most_specific_rate_limit.id == highest_match_rule_id then
-          return most_specific_rate_limit and most_specific_rate_limit.rate_limit
+      if weighted_matchs[highest_match_rule_id] >= 1 then
+        for key, most_specific_rate_limit in pairs(regexp_limits) do
+          if most_specific_rate_limit.id == highest_match_rule_id then
+            return most_specific_rate_limit and most_specific_rate_limit.rate_limit
+          end
         end
       end
     end
