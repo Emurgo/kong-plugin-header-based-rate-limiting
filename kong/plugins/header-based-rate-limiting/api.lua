@@ -40,14 +40,32 @@ local function is_wildcard(header)
     return header == "*" or header == cjson.null
 end
 
+local function contains_regexp(header)
+    if string.find(header, ".*", 0, true) then
+        return true
+    else
+        return false
+    end
+end
+
 local function encode_headers(header_composition)
     local encoded_headers = {}
 
     for _, header in ipairs(header_composition) do
-        local encoded_header = is_wildcard(header) and "*" or encode_base64(header)
+        kong.log("@@@@@@header@@@@@@@ ", inspect(header))
+        kong.log("@@@@@@is wildcard@@@@@@@ ", inspect(is_wildcard(header)))
+        kong.log("@@@@@@contains wildcard@@@@@@@ ", inspect(contains_regexp(header)))
+        local encoded_header = is_wildcard(header)
+        if contains_regexp(header) == true then
+            encoded_header = "regexp_" .. encode_base64(header)
+        else
+            encoded_header = encode_base64(header)
+        end
+        kong.log("@@@@@@encoded_header@@@@@@@ ", inspect(encoded_header))
 
         table.insert(encoded_headers, encoded_header)
     end
+    kong.log("@@@@@@encoded_headers@@@@@@@ ", inspect(encoded_headers))
 
     return table.concat(encoded_headers, ",")
 end
@@ -72,38 +90,39 @@ end
 
 return {
     ["/header-based-rate-limits"] = {
-	schema = hbrl_schema,
-	methods = {
-          POST = function(self, ...)
-              local params_with_encoded_header_composition = encode_header_composition(self.args.post)
-	      self.args.post = params_with_encoded_header_composition
-	      endpoints.post_collection_endpoint(hbrl_schema)(self, ...)
-          end,
+        schema = hbrl_schema,
+        methods = {
+            POST = function(self, ...)
+                local params_with_encoded_header_composition = encode_header_composition(self.args.post)
+                self.args.post = params_with_encoded_header_composition
+                kong.log("@@@@@@headers@@@@@@@ ", inspect(self.args.post))
+                endpoints.post_collection_endpoint(hbrl_schema)(self, ...)
+            end,
 
-          GET = function(self, ...)
-	      endpoints.get_collection_endpoint(hbrl_schema)(self, ...)
-          end,
+            GET = function(self, ...)
+                endpoints.get_collection_endpoint(hbrl_schema)(self, ...)
+            end,
 
-          DELETE = function(self, ...)
-              kong.db.header_based_rate_limits:truncate()
-	      return kong.response.exit(200, { message = "Dropped all the header-based rate limits" })
-          end
-	}
+            DELETE = function(self, ...)
+                kong.db.header_based_rate_limits:truncate()
+                return kong.response.exit(200, { message = "Dropped all the header-based rate limits" })
+            end
+        }
     },
 
     ["/header-based-rate-limits/:id"] = {
-	schema = hbrl_schema,
-	methods = {
-          DELETE = function(self, ...)
-	      local res, err = kong.db.connector:query(string.format(
-	      	"DELETE FROM header_based_rate_limits WHERE id = '%s'", self.params.id))
+        schema = hbrl_schema,
+        methods = {
+            DELETE = function(self, ...)
+	              local res, err = kong.db.connector:query(string.format(
+                    "DELETE FROM header_based_rate_limits WHERE id = '%s'", self.params.id))
 
-              if err or res.affected_rows == 0 then
-	          return kong.response.exit(404, { message = "ratelimit not found!" })
-              end
-	      return kong.response.exit(200, { message = "ratelimit deleted!" })
+                    if err or res.affected_rows == 0 then
+	                      return kong.response.exit(404, { message = "ratelimit not found!" })
+                    end
+	              return kong.response.exit(200, { message = "ratelimit deleted!" })
 
-          end
-       }
+            end
+        }
     }
 }
