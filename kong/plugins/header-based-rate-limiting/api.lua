@@ -54,7 +54,8 @@ local function encode_headers(header_composition)
     for _, header in ipairs(header_composition) do
         local encoded_header = is_wildcard(header)
         if contains_regexp(header) == true then
-            encoded_header = "regexp_" .. encode_base64(header)
+            sanitized_regexp = string.gsub(header,"[%(%)%+%-%?%[%]%^%$%%]", "%%%0")
+            encoded_header = "regexp_" .. encode_base64(sanitized_regexp)
         else
             encoded_header = encode_base64(header)
         end

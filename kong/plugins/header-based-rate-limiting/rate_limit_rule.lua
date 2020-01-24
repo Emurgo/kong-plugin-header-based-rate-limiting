@@ -51,14 +51,14 @@ local function find_applicable_rate_limit(model, service_id, route_id, entity_id
 
       -- weigth matches by number of regexp matches in each rule
       local weighted_matchs = {}
-      regexp_limits = model:get_regexp(service_id, route_id)
+      local regexp_limits = model:get_regexp(service_id, route_id)
       for k, limit in pairs(regexp_limits) do
 
         weighted_matchs[limit.id] = 0
         for index, header in ipairs(split_header_composition(limit.header_composition)) do
           local decoded_regexp = ngx.decode_base64(header:gsub("^regexp_",""))
           if string.len(decoded_regexp) >= 1 then
-            if string.match(ngx.decode_base64(entity_identifier[index]), decoded_regexp) then
+            if string.find(ngx.decode_base64(entity_identifier[index]), decoded_regexp) ~= nil then
                weighted_matchs[limit.id] = weighted_matchs[limit.id] + 1
             end
           end
