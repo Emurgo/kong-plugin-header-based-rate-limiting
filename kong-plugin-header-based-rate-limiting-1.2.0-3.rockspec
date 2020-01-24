@@ -1,5 +1,5 @@
 package = "kong-plugin-header-based-rate-limiting"
-version = "1.2.0-2"
+version = "1.2.0-3"
 supported_platforms = {"linux", "macosx"}
 source = {
   url = "git+https://github.com/emurgo/kong-plugin-header-based-rate-limiting.git",
